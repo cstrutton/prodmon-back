@@ -2,6 +2,7 @@
 
 import unittest
 from unittest.mock import Mock
+from random import randint
 
 from .context import prodmon
 from .pylogix_helpers import Mock_Comm, Response
@@ -35,8 +36,20 @@ class ReadCounterTestSuit(unittest.TestCase):
             'Part_Type_Map': {'0': 'PartType0', '1': 'PartType1'}
         }
 
+    def test_first_pass_through(self):
+        FIRST_COUNTER_VALUE = randint(1, 2500)
+        prodmon.main.part_count_entry = Mock()
+
+        comm = Mock_Comm(
+            {self.counter_entry['tag']: FIRST_COUNTER_VALUE, self.counter_entry['Part_Type_Tag']: 0})
+
+        prodmon.read_counter(self.counter_entry, comm)
+
+        prodmon.main.part_count_entry.assert_called_once()
+        assert self.counter_entry['lastcount'] == FIRST_COUNTER_VALUE
+
     def test_zero_read(self):
-        prodmon.part_count_entry = Mock()
+        prodmon.main.part_count_entry = Mock()
 
         comm = Mock_Comm(
             {self.counter_entry['tag']: 0, self.counter_entry['Part_Type_Tag']: 0})
@@ -46,35 +59,21 @@ class ReadCounterTestSuit(unittest.TestCase):
 
         prodmon.read_counter(self.counter_entry, comm)
 
-        prodmon.part_count_entry.assert_not_called()
+        prodmon.main.part_count_entry.assert_not_called()
         assert self.counter_entry['lastcount'] == 0
 
-    # def test_first_pass_through(mocker):
-    #     mocker.patch('part_count_entry')
+    def test_multiple_entries(self):
+        prodmon.main.part_count_entry = Mock()
 
-    #     counter_entry = get_counter_entry()
+        self.counter_entry['lastcount'] = 250
 
-    #     comm = Mock_Comm(
-    #         {counter_entry['tag']: 255, counter_entry['Part_Type_Tag']: 0})
+        comm = Mock_Comm(
+            {self.counter_entry['tag']: 252, self.counter_entry['Part_Type_Tag']: 0})
 
-    #     main.read_counter(counter_entry, comm)
+        prodmon.read_counter(self.counter_entry, comm)
 
-    #     main.part_count_entry.assert_called_once()
-    #     assert counter_entry['lastcount'] == 255
-
-    # def test_multiple_entries(mocker):
-    #     mocker.patch('part_count_entry')
-
-    #     counter_entry = get_counter_entry()
-    #     counter_entry['lastcount'] = 250
-
-    #     comm = Mock_Comm(
-    #         {counter_entry['tag']: 252, counter_entry['Part_Type_Tag']: 0})
-
-    #     main.read_counter(counter_entry, comm)
-
-    #     assert main.part_count_entry.call_count == 2
-    #     assert counter_entry['lastcount'] == 252
+        assert prodmon.main.part_count_entry.call_count == 2
+        assert self.counter_entry['lastcount'] == 252
 
 
 if __name__ == '__main__':
