@@ -1,4 +1,4 @@
-.PHONY : clean
+.PHONY : clean test
 clean:
 	find . -name '*.pyc' -exec rm --force {} +
 	find . -name '*.pyo' -exec rm --force {} +
@@ -9,5 +9,5 @@ init:
 	# pipenv install -r requirements.txt
 
 test:
-	# pytest tests
+	pytest tests
 
