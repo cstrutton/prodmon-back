@@ -1,5 +1,13 @@
+.PHONY : clean
+clean:
+	find . -name '*.pyc' -exec rm --force {} +
+	find . -name '*.pyo' -exec rm --force {} +
+	find . -name '__pycache__' -exec rm -rf {} +
+	find . -name '*.sql' -exec rm --force {} +
+
 init:
-	pip install -r requirements.txt
+	# pipenv install -r requirements.txt
 
 test:
-	nosetests tests
+	# pytest tests
+
