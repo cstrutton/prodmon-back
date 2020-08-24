@@ -105,19 +105,22 @@ def loop(taglist, ip, slot=0, minimum_cycle=.5):
             if entry['nextread'] > now:
                 continue  # too soon move on
 
+            entry['lastread'] = now
+
             if entry['type'] == 'counter':
-                # print('Read Counter:', entry['tag'])
-                entry['lastread'] = now
-                read_counter(entry, comm)
-                # set the next read timestamp
-                entry['nextread'] += frequency
+                with PLC() as comm:
+                    comm.IPAddress = ip
+                    comm.ProcessorSlot = slot
+                    read_counter(entry, comm)
 
             if entry['type'] == 'value':
-                # print('Read Value:', entry['tag'])
-                entry['lastread'] = now
-                read_value(entry, comm)
-                # set the next read timestamp
-                entry['nextread'] += frequency
+                with PLC() as comm:
+                    comm.IPAddress = ip
+                    comm.ProcessorSlot = slot
+                    read_value(entry, comm)
+
+            # set the next read timestamp
+            entry['nextread'] += frequency
 
 
 def read_value(value_entry, comm):

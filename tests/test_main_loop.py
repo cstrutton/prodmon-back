@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from unittest.mock import Mock, patch
-from random import randint
+from unittest.mock import patch
 import time
 
 
@@ -40,16 +39,13 @@ class ReadCounterTestSuit(unittest.TestCase):
     def test_polling_too_fast(self, mock_read_counter, mock_PLC):
 
         minimum_cycle = 1
+
         prodmon.loop([self.counter_entry], '0.0.0.0',
                      slot=0, minimum_cycle=minimum_cycle)
-        pass1 = self.counter_entry['lastread']
-        pass1time = time.time()
-        time.sleep(minimum_cycle/2)
+
         prodmon.loop([self.counter_entry], '0.0.0.0',
                      slot=0, minimum_cycle=minimum_cycle)
-        pass2 = self.counter_entry['lastread']
-        pass2time = time.time()
-        interval = pass2time-pass1time
+
         mock_read_counter.assert_called_once()
 
     @patch("prodmon.main.PLC")
@@ -65,7 +61,17 @@ class ReadCounterTestSuit(unittest.TestCase):
         time.sleep(minimum_cycle/2)
         prodmon.loop([self.counter_entry], '0.0.0.0',
                      slot=0, minimum_cycle=minimum_cycle)
-        assert mock_read_counter.call_count == 2
+        self.assertEqual(mock_read_counter.call_count, 2)
+
+    @patch("prodmon.main.PLC")
+    @patch("prodmon.main.read_counter")
+    def test_first_pass_through(self, mock_read_counter, mock_PLC):
+        pass
+        minimum_cycle = 1
+        self.counter_entry['nextread'] = 0
+        prodmon.loop([self.counter_entry], '0.0.0.0',
+                     slot=0, minimum_cycle=minimum_cycle)
+        self.assertNotEqual(self.counter_entry['nextread'], 0)
 
 
 if __name__ == '__main__':
