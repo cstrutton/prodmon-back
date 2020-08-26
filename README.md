@@ -31,6 +31,21 @@ sudo systemctl daemon-reload
 ```
 #### Network Configuration:
 
+The image for these boards is Linux 4.19.71-imx-r1 armv7l and is based on Debian buster.
+The images are built with Seeed's customized version of the BeagleBoard image builder.
+https://github.com/Seeed-Studio/image-builder
+
+`connman` is used to configure networking.  (https://wiki.archlinux.org/index.php/ConnMan)
+
+These boards generate a random mac address on each boot.  This makes it really hard to use `connman` as services are configured by name and they are named partly on thier MAC address.  
+Fix the MAC address, add the following to the end of `/boot/uEnv.txt`
+```
+ethaddr=xx:xx:xx:xx:xx:xx
+eth1addr=xx:xx:xx:xx:xx:xx
+```
+Note that any given service will only be visable if it is connected. Each network port will use DHCP if it is available.
+I used a DHCP server on my laptop to give an known IP to one port then configured it as below.  Then connected to the other port and configured it.  Note: ip address changes take effect immediatly and you will need to reconnect.  
+
 Use connman interactive mode to configure the PLANT network:
 ```
 root@npi:~# connmanctl
