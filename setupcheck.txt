@@ -1,0 +1,24 @@
+Machine Number
+
+Burn latest image to eMMc
+
+add sticker set for networks and ipaddresses
+
+set fixed MAC for Plant     __:__:__:__:__:__
+
+set fixed MAC for PLC       __:__:__:__:__:__
+
+set fixed IP for Plant      ___.___.___.___
+
+set fixed IP for PLC        ___.___.___.___
+
+update apt repositories
+
+install prerequisits with apt
+ - python3
+ - python3-pip
+ - python3-venv
+ - git
+
+git clone master repo
+
