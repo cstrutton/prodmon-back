@@ -1,6 +1,8 @@
 from pylogix import PLC
 import time
 import os
+import configparser
+
 
 tag_list = [
     {
@@ -82,10 +84,12 @@ tag_frequency_op30 = [
 ]
 
 
-def loop(taglist, ip, slot=0, minimum_cycle=.5):
+def loop(taglist, configuration, ip, slot=0):
     with PLC() as comm:
         comm.IPAddress = ip
         comm.ProcessorSlot = slot
+
+        minimum_cycle = configuration['minimum_cycle']
 
         for entry in taglist:
 
@@ -176,5 +180,9 @@ def part_count_entry(table, timestamp, count, machine, parttype):
 
 if __name__ == "__main__":
 
+    config = configparser.ConfigParser()
+    config.read('configs/example.ini')
+    collect_config = config['COLLECT']
+
     while True:
-        loop(tag_list, ip='10.4.42.135', slot=3, minimum_cycle=.5)
+        loop(tag_list, collect_config, ip='10.4.42.135', slot=3)
