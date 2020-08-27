@@ -15,6 +15,7 @@ cd prodmon
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirents.txt
+# create directory for sql files
 ```
 
 #### Add Service Files:
