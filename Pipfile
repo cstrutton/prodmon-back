@@ -7,14 +7,13 @@ verify_ssl = true
 autopep8 = "*"
 pytest = "*"
 pylint = "*"
-
-[packages]
-nose = "*"
-Sphinx = "*"
+sphinx = "*"
 sphinx-autobuild = "*"
 doc8 = "*"
-pylogix = "*"
 nose2 = "*"
+
+[packages]
+pylogix = "*"
 
 [requires]
 python_version = "3.7"

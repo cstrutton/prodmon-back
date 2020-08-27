@@ -1,2 +1,2 @@
-nose
-sphinx
+-i https://pypi.org/simple
+pylogix==0.7.0
