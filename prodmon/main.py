@@ -7,23 +7,27 @@ import configparser
 tag_list = [
     {
         # type = counter|value
-        'type': 'counter',
+        'type': 'pylogix_counter',
+        # ip is the controller's ip address
+        'ip': '10.4.42.135',
+        # slot is the controller's slot
+        'slot': 3,
         # tag is the PLC tag to read
         'tag': 'Program:Production.ProductionData.DailyCounts.DailyTotal',
-        # Machine is written into the machine colum on the database
-        'Machine': '1617',
-        # used internally
-        'nextread': 0,
-        'lastcount': 0,
-        'lastread': 0,
+        # tag containing what part type is currently running
+        'Part_Type_Tag': 'Stn010.PartType',
+        # map values in above to a string to write in the part type db colum
+        'Part_Type_Map': {'0': '50-4865', '1': '50-5081'},
         # how often to try to read the tag in seconds
         'frequency': .5,
         # database table to write to
         'table': 'GFxPRoduction',
-        # tag containing what part type is currently running
-        'Part_Type_Tag': 'Stn010.PartType',
-        # map values in above to a string to write in the part type db colum
-        'Part_Type_Map': {'0': '50-4865', '1': '50-5081'}
+        # Machine is written into the machine colum in the database table
+        'Machine': '1617',
+        # used internally to track the readings
+        'nextread': 0,      # timestamp of the next reading
+        'lastcount': 0,     # last counter value
+        'lastread': 0       # timestamp of the last read
     }
 ]
 
@@ -85,81 +89,81 @@ tag_frequency_op30 = [
 
 
 def loop(taglist, configuration, ip, slot=0):
-    with PLC() as comm:
-        comm.IPAddress = ip
-        comm.ProcessorSlot = slot
 
-        minimum_cycle = configuration['minimum_cycle']
+    minimum_cycle = configuration['minimum_cycle']
 
-        for entry in taglist:
+    for entry in taglist:
 
-            # get current timestamp
-            now = time.time()
+        # get current timestamp
+        now = time.time()
 
-            frequency = entry['frequency']
+        frequency = entry['frequency']
 
-            # make sure we are not polling too fast
-            if frequency < minimum_cycle:
-                frequency = minimum_cycle
+        # make sure we are not polling too fast
+        if frequency < minimum_cycle:
+            frequency = minimum_cycle
 
-            # handle first pass through
-            if entry['nextread'] == 0:
-                entry['nextread'] = now
+        # handle first pass through
+        if entry['nextread'] == 0:
+            entry['nextread'] = now
 
-            if entry['nextread'] > now:
-                continue  # too soon move on
+        if entry['nextread'] > now:
+            continue  # too soon move on
 
-            entry['lastread'] = now
+        entry['lastread'] = now
 
-            if entry['type'] == 'counter':
-                with PLC() as comm:
-                    comm.IPAddress = ip
-                    comm.ProcessorSlot = slot
-                    read_counter(entry, comm)
+        if entry['type'] == 'pylogix_counter':
+            read_pylogix_counter(entry)
 
-            if entry['type'] == 'value':
-                with PLC() as comm:
-                    comm.IPAddress = ip
-                    comm.ProcessorSlot = slot
-                    read_value(entry, comm)
+        if entry['type'] == 'value':
+            with PLC() as comm:
+                comm.IPAddress = ip
+                comm.ProcessorSlot = slot
+                read_value(entry, comm)
 
-            # set the next read timestamp
-            entry['nextread'] += frequency
+        # set the next read timestamp
+        entry['nextread'] += frequency
 
 
 def read_value(value_entry, comm):
     print(time.time(), ':', comm.Read(value_entry['tag']))
 
 
-def read_counter(counter_entry, comm):
-    # read the tag
-    part_count = comm.Read(counter_entry['tag'])
-    if part_count.Status != 'Success':
-        print('failed to read ', part_count)
-        return
+def read_pylogix_counter(counter_entry):
+    with PLC() as comm:
+        comm.IPAddress = counter_entry['ip']
+        comm.ProcessorSlot = counter_entry['slot']
 
-    part_type = comm.Read(counter_entry['Part_Type_Tag'])
-    if part_type.Status != 'Success':
-        print('failed to read ',  part_type)
-        return
+        # read the tag
+        part_count = comm.Read(counter_entry['tag'])
+        if part_count.Status != 'Success':
+            print('failed to read ', part_count)
+            return
 
-    if (part_count.Value == 0):
-        counter_entry['lastcount'] = part_count.Value
-        return  # machine count rolled over or is not running
+        part_type = comm.Read(counter_entry['Part_Type_Tag'])
+        if part_type.Status != 'Success':
+            print('failed to read ',  part_type)
+            return
 
-    if (counter_entry['lastcount'] == 0):  # first time through...
-        counter_entry['lastcount'] = part_count.Value - 1  # only count 1 part
+        if (part_count.Value == 0):
+            counter_entry['lastcount'] = part_count.Value
+            return  # machine count rolled over or is not running
 
-    if part_count.Value > counter_entry['lastcount']:
-        for entry in range(counter_entry['lastcount']+1, part_count.Value+1):
-            part_count_entry(
-                table=counter_entry['table'],
-                timestamp=counter_entry['lastread'],
-                count=entry,
-                machine=counter_entry['Machine'],
-                parttype=counter_entry['Part_Type_Map'][str(part_type.Value)]
-            )
-        counter_entry['lastcount'] = part_count.Value
+        if (counter_entry['lastcount'] == 0):  # first time through...
+            counter_entry['lastcount'] = part_count.Value - \
+                1  # only count 1 part
+
+        if part_count.Value > counter_entry['lastcount']:
+            for entry in range(counter_entry['lastcount']+1, part_count.Value+1):
+                part_count_entry(
+                    table=counter_entry['table'],
+                    timestamp=counter_entry['lastread'],
+                    count=entry,
+                    machine=counter_entry['Machine'],
+                    parttype=counter_entry['Part_Type_Map'][str(
+                        part_type.Value)]
+                )
+            counter_entry['lastcount'] = part_count.Value
 
 
 def part_count_entry(table, timestamp, count, machine, parttype):

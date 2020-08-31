@@ -9,34 +9,38 @@ from .context import prodmon
 from .pylogix_helpers import Mock_Comm, Response
 
 
-class ReadCounterTestSuit(unittest.TestCase):
-    """read_counter test cases."""
+class MainLoopTestSuit(unittest.TestCase):
+    """main loop test cases."""
 
     def setUp(self):
 
         self.counter_entry = {
             # type = counter|value
-            'type': 'counter',
+            'type': 'pylogix_counter',
+            # ip is the controller's ip address
+            'ip': '10.4.42.135',
+            # slot is the controller's slot
+            'slot': 3,
             # tag is the PLC tag to read
-            'tag': 'Tag.Counter',
-            # Machine is written into the machine colum on the database
-            'Machine': 'MachineName',
-            # used internally
-            'nextread': 0,
-            'lastcount': 0,
-            'lastread': 0,
+            'tag': 'Program:Production.ProductionData.DailyCounts.DailyTotal',
+            # tag containing what part type is currently running
+            'Part_Type_Tag': 'Stn010.PartType',
+            # map values in above to a string to write in the part type db colum
+            'Part_Type_Map': {'0': '50-4865', '1': '50-5081'},
             # how often to try to read the tag in seconds
             'frequency': .5,
             # database table to write to
-            'table': 'dbTable',
-            # tag containing what part type is currently running
-            'Part_Type_Tag': 'Tag.PartType',
-            # map values in above to a string to write in the part type db colum
-            'Part_Type_Map': {'0': 'PartType0', '1': 'PartType1'}
+            'table': 'GFxPRoduction',
+            # Machine is written into the machine colum in the database table
+            'Machine': '1617',
+            # used internally to track the readings
+            'nextread': 0,      # timestamp of the next reading
+            'lastcount': 0,     # last counter value
+            'lastread': 0       # timestamp of the last read
         }
 
     @patch("prodmon.main.PLC")
-    @patch("prodmon.main.read_counter")
+    @patch("prodmon.main.read_pylogix_counter")
     def test_polling_too_fast(self, mock_read_counter, mock_PLC):
         """
         Tests Polling faster than the specified minimum cycle
@@ -53,7 +57,7 @@ class ReadCounterTestSuit(unittest.TestCase):
         mock_read_counter.assert_called_once()
 
     @patch("prodmon.main.PLC")
-    @patch("prodmon.main.read_counter")
+    @patch("prodmon.main.read_pylogix_counter")
     def test_polling(self, mock_read_counter, mock_PLC):
         """
         Tests that the Minimum Cycle is observerd
@@ -76,7 +80,7 @@ class ReadCounterTestSuit(unittest.TestCase):
         self.assertEqual(mock_read_counter.call_count, 2)
 
     @patch("prodmon.main.PLC")
-    @patch("prodmon.main.read_counter")
+    @patch("prodmon.main.read_pylogix_counter")
     def test_first_pass_through(self, mock_read_counter, mock_PLC):
         """
         Tests first pass behaviour
