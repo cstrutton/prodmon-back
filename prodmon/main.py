@@ -128,7 +128,7 @@ def loop(taglist, configuration, ip, slot=0):
 
 
 def read_value(value_entry, comm):
-    print(time.time(), ':', comm.Read(entry['tag']))
+    print(time.time(), ':', comm.Read(value_entry['tag']))
 
 
 def read_counter(counter_entry, comm):

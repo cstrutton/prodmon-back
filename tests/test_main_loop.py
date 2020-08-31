@@ -13,6 +13,7 @@ class ReadCounterTestSuit(unittest.TestCase):
     """read_counter test cases."""
 
     def setUp(self):
+
         self.counter_entry = {
             # type = counter|value
             'type': 'counter',
@@ -37,40 +38,58 @@ class ReadCounterTestSuit(unittest.TestCase):
     @patch("prodmon.main.PLC")
     @patch("prodmon.main.read_counter")
     def test_polling_too_fast(self, mock_read_counter, mock_PLC):
+        """
+        Tests Polling faster than the specified minimum cycle
 
-        minimum_cycle = 1
+        - try reading twice back to back (mocked read is almost instantainious)
+        - should call read counter exactly one time
+        """
 
-        prodmon.loop([self.counter_entry], '0.0.0.0',
-                     slot=0, minimum_cycle=minimum_cycle)
+        collect_config = dict(minimum_cycle=1)
 
-        prodmon.loop([self.counter_entry], '0.0.0.0',
-                     slot=0, minimum_cycle=minimum_cycle)
+        prodmon.loop([self.counter_entry], collect_config, '0.0.0.0', slot=0)
+        prodmon.loop([self.counter_entry], collect_config, '0.0.0.0', slot=0)
 
         mock_read_counter.assert_called_once()
 
     @patch("prodmon.main.PLC")
     @patch("prodmon.main.read_counter")
     def test_polling(self, mock_read_counter, mock_PLC):
+        """
+        Tests that the Minimum Cycle is observerd
 
-        minimum_cycle = 1
-        prodmon.loop([self.counter_entry], '0.0.0.0',
-                     slot=0, minimum_cycle=minimum_cycle)
-        time.sleep(minimum_cycle/2)
-        prodmon.loop([self.counter_entry], '0.0.0.0',
-                     slot=0, minimum_cycle=minimum_cycle)
-        time.sleep(minimum_cycle/2)
-        prodmon.loop([self.counter_entry], '0.0.0.0',
-                     slot=0, minimum_cycle=minimum_cycle)
+        - try looping 3 times waiting for half minimum cycle between each
+        - should call read counter exactly 2 times
+        """
+        collect_config = dict(minimum_cycle=1)
+
+        prodmon.loop([self.counter_entry], collect_config, '0.0.0.0', slot=0)
+
+        time.sleep(collect_config['minimum_cycle']/2)
+
+        prodmon.loop([self.counter_entry], collect_config, '0.0.0.0', slot=0)
+
+        time.sleep(collect_config['minimum_cycle']/2)
+
+        prodmon.loop([self.counter_entry], collect_config, '0.0.0.0', slot=0)
+
         self.assertEqual(mock_read_counter.call_count, 2)
 
     @patch("prodmon.main.PLC")
     @patch("prodmon.main.read_counter")
     def test_first_pass_through(self, mock_read_counter, mock_PLC):
-        pass
-        minimum_cycle = 1
+        """
+        Tests first pass behaviour
+
+        - try looping 3 times waiting for half minimum cycle between each
+        - should call read counter exactly 2 times
+        """
+
+        collect_config = dict(minimum_cycle=1)
+
         self.counter_entry['nextread'] = 0
-        prodmon.loop([self.counter_entry], '0.0.0.0',
-                     slot=0, minimum_cycle=minimum_cycle)
+        prodmon.loop([self.counter_entry], collect_config, '0.0.0.0', slot=0)
+
         self.assertNotEqual(self.counter_entry['nextread'], 0)
 
 
