@@ -9,9 +9,9 @@ tag_list = [
         # type = counter|value
         'type': 'pylogix_counter',
         # ip is the controller's ip address
-        'ip': '10.4.42.135',
+        'processor_ip': '10.4.42.135',
         # slot is the controller's slot
-        'slot': 3,
+        'processor_slot': 3,
         # tag is the PLC tag to read
         'tag': 'Program:Production.ProductionData.DailyCounts.DailyTotal',
         # tag containing what part type is currently running
@@ -88,7 +88,7 @@ tag_frequency_op30 = [
 ]
 
 
-def loop(taglist, configuration, ip, slot=0):
+def loop(taglist, configuration):
 
     minimum_cycle = configuration['minimum_cycle']
 
@@ -117,8 +117,8 @@ def loop(taglist, configuration, ip, slot=0):
 
         if entry['type'] == 'value':
             with PLC() as comm:
-                comm.IPAddress = ip
-                comm.ProcessorSlot = slot
+                comm.IPAddress = entry['processor_ip']
+                comm.ProcessorSlot = entry['processor_slot']
                 read_value(entry, comm)
 
         # set the next read timestamp
@@ -189,4 +189,4 @@ if __name__ == "__main__":
     collect_config = config['COLLECT']
 
     while True:
-        loop(tag_list, collect_config, ip='10.4.42.135', slot=3)
+        loop(tag_list, collect_config)

@@ -17,10 +17,10 @@ class MainLoopTestSuit(unittest.TestCase):
         self.counter_entry = {
             # type = counter|value
             'type': 'pylogix_counter',
-            # ip is the controller's ip address
-            'ip': '10.4.42.135',
-            # slot is the controller's slot
-            'slot': 3,
+            # processor_ip is the controller's ip address
+            'processor_ip': '10.4.42.135',
+            # processor_slot is the controller's slot
+            'processor_slot': 3,
             # tag is the PLC tag to read
             'tag': 'Program:Production.ProductionData.DailyCounts.DailyTotal',
             # tag containing what part type is currently running
@@ -51,8 +51,8 @@ class MainLoopTestSuit(unittest.TestCase):
 
         collect_config = dict(minimum_cycle=1)
 
-        prodmon.loop([self.counter_entry], collect_config, '0.0.0.0', slot=0)
-        prodmon.loop([self.counter_entry], collect_config, '0.0.0.0', slot=0)
+        prodmon.loop([self.counter_entry], collect_config)
+        prodmon.loop([self.counter_entry], collect_config)
 
         mock_read_counter.assert_called_once()
 
@@ -67,15 +67,15 @@ class MainLoopTestSuit(unittest.TestCase):
         """
         collect_config = dict(minimum_cycle=1)
 
-        prodmon.loop([self.counter_entry], collect_config, '0.0.0.0', slot=0)
+        prodmon.loop([self.counter_entry], collect_config)
 
         time.sleep(collect_config['minimum_cycle']/2)
 
-        prodmon.loop([self.counter_entry], collect_config, '0.0.0.0', slot=0)
+        prodmon.loop([self.counter_entry], collect_config)
 
         time.sleep(collect_config['minimum_cycle']/2)
 
-        prodmon.loop([self.counter_entry], collect_config, '0.0.0.0', slot=0)
+        prodmon.loop([self.counter_entry], collect_config)
 
         self.assertEqual(mock_read_counter.call_count, 2)
 
@@ -92,7 +92,7 @@ class MainLoopTestSuit(unittest.TestCase):
         collect_config = dict(minimum_cycle=1)
 
         self.counter_entry['nextread'] = 0
-        prodmon.loop([self.counter_entry], collect_config, '0.0.0.0', slot=0)
+        prodmon.loop([self.counter_entry], collect_config)
 
         self.assertNotEqual(self.counter_entry['nextread'], 0)
 
