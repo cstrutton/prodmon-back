@@ -21,8 +21,11 @@ collect:
     
 post:
   sqldir: ./tempSQL/
-  key: value
-  key2: value
+  dbconfig:
+    database: prodrptdb
+    user: stuser
+    password: stp383
+    host: 10.4.1.224
 
 configure:
   key: value

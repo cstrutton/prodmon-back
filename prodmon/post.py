@@ -1,24 +1,20 @@
 import glob
 import os
+import yaml
 from time import sleep
 
 import mysql.connector
 
-config = {
-    'database': 'prodrptdb',
-    'user': 'stuser',
-    'password': 'stp383',
-    'host': '10.4.1.224'
-}
 
-cnx = mysql.connector.connect
+def executesql():
 
+    dbconfig = post_config['dbconfig']
+    sqldir = post_config['sqldir']
 
-def executesql(directory='/var/local/SQL/', config=config):
-    cnx = mysql.connector.connect(**config)
+    cnx = mysql.connector.connect(**dbconfig)
     cursor = cnx.cursor()
 
-    for filepath in glob.iglob(directory+'*.sql'):
+    for filepath in glob.iglob(sqldir+'*.sql'):
         with open(filepath, "r", encoding="utf-8") as file:
             for line in file:
                 sql = line.strip()
@@ -32,6 +28,12 @@ def executesql(directory='/var/local/SQL/', config=config):
 
 
 if __name__ == '__main__':
+
+    with open(r'configs/example-config.yml') as file:
+        config = yaml.load(file, Loader=yaml.FullLoader)
+
+    post_config = config['post']
+
     while True:
         executesql()
         sleep(2)
