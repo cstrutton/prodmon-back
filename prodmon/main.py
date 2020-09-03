@@ -77,8 +77,8 @@ def part_count_entry(table, timestamp, count, machine, parttype):
 
     # file_path = '/var/local/SQL/{}.sql'.format(
     #     str(int(timestamp)))
-    file_path = './tempSQL/{}.sql'.format(
-        str(int(timestamp)))
+    file_path = '{}{}.sql'.format(
+        collect_config['sqldir'], str(int(timestamp)))
 
     with open(file_path, "a+") as file:
         sql = ('INSERT INTO {} '
