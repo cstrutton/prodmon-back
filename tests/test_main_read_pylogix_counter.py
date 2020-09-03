@@ -16,9 +16,9 @@ class ReadPylogixCounterTestSuit(unittest.TestCase):
             # type = counter|value
             'type': 'pylogix_counter',
             # ip is the controller's ip address
-            'ip': '10.4.42.135',
+            'processor_ip': '10.4.42.135',
             # slot is the controller's slot
-            'slot': 3,
+            'processor_slot': 3,
             # tag is the PLC tag to read
             'tag': 'Program:Production.ProductionData.DailyCounts.DailyTotal',
             # tag containing what part type is currently running

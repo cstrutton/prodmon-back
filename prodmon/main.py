@@ -1,98 +1,14 @@
 from pylogix import PLC
 import time
 import os
-import configparser
+import yaml
 
 
-tag_list = [
-    {
-        # type = counter|value
-        'type': 'pylogix_counter',
-        # ip is the controller's ip address
-        'processor_ip': '10.4.42.135',
-        # slot is the controller's slot
-        'processor_slot': 3,
-        # tag is the PLC tag to read
-        'tag': 'Program:Production.ProductionData.DailyCounts.DailyTotal',
-        # tag containing what part type is currently running
-        'Part_Type_Tag': 'Stn010.PartType',
-        # map values in above to a string to write in the part type db colum
-        'Part_Type_Map': {'0': '50-4865', '1': '50-5081'},
-        # how often to try to read the tag in seconds
-        'frequency': .5,
-        # database table to write to
-        'table': 'GFxPRoduction',
-        # Machine is written into the machine colum in the database table
-        'Machine': '1617',
-        # used internally to track the readings
-        'nextread': 0,      # timestamp of the next reading
-        'lastcount': 0,     # last counter value
-        'lastread': 0       # timestamp of the last read
-    }
-]
-
-
-tag_frequency_op30 = [
-    {
-        'type': 'counter',
-        'tag': 'OP30_4_COUNT.SYSTEM[0].GOOD',
-        'Machine': '1605',
-        'nextread': 0,
-        'lastcount': 0,
-        'frequency': .5,
-        'table': 'GFxPRoduction',
-        'Part_Type_Tag': 'ROBOT_R30_4.O.DI37',
-        'Part_Type_Map': {'False': '50-5081', 'True': '50-4865'},
-    },
-    {
-        'type': 'counter',
-        'tag': 'OP30_1_COUNT.SYSTEM[0].GOOD',
-        'Machine': '1606',
-        'frequency': .5,
-        'nextread': 0,
-        'lastcount': 0,
-        'table': 'GFxPRoduction',
-        'Part_Type_Tag': 'ROBOT_R30_1.O.DI37',
-        'Part_Type_Map': {'False': '50-5081', 'True': '50-4865'},
-    },
-    {
-        'type': 'counter',
-        'tag': 'OP30_2_COUNT.SYSTEM[0].GOOD',
-        'Machine': '1607',
-        'frequency': .5,
-        'nextread': 0,
-        'lastcount': 0,
-        'table': 'GFxPRoduction',
-        'Part_Type_Tag': 'ROBOT_R30_2.O.DI37',
-        'Part_Type_Map': {'False': '50-5081', 'True': '50-4865'},
-    },
-    {
-        'type': 'counter',
-        'tag': 'OP30_3_COUNT.SYSTEM[0].GOOD',
-        'Machine': '1608',
-        'frequency': .5,
-        'nextread': 0,
-        'lastcount': 0,
-        'table': 'GFxPRoduction',
-        'Part_Type_Tag': 'ROBOT_R30_3.O.DI37',
-        'Part_Type_Map': {'False': '50-5081', 'True': '50-4865'},
-    },
-    {
-        'type': 'value',
-        'tag': 'OP30_3_COUNT.SYSTEM[0].GOOD',
-        'nextread': 0,
-        'frequency': 5,
-        'table': 'DataTable',
-        'name': 'random value'
-    }
-]
-
-
-def loop(taglist, configuration):
+def loop(configuration):
 
     minimum_cycle = configuration['minimum_cycle']
 
-    for entry in taglist:
+    for entry in configuration['tags']:
 
         # get current timestamp
         now = time.time()
@@ -115,24 +31,14 @@ def loop(taglist, configuration):
         if entry['type'] == 'pylogix_counter':
             read_pylogix_counter(entry)
 
-        if entry['type'] == 'value':
-            with PLC() as comm:
-                comm.IPAddress = entry['processor_ip']
-                comm.ProcessorSlot = entry['processor_slot']
-                read_value(entry, comm)
-
         # set the next read timestamp
         entry['nextread'] += frequency
 
 
-def read_value(value_entry, comm):
-    print(time.time(), ':', comm.Read(value_entry['tag']))
-
-
 def read_pylogix_counter(counter_entry):
     with PLC() as comm:
-        comm.IPAddress = counter_entry['ip']
-        comm.ProcessorSlot = counter_entry['slot']
+        comm.IPAddress = counter_entry['processor_ip']
+        comm.ProcessorSlot = counter_entry['processor_slot']
 
         # read the tag
         part_count = comm.Read(counter_entry['tag'])
@@ -184,9 +90,10 @@ def part_count_entry(table, timestamp, count, machine, parttype):
 
 if __name__ == "__main__":
 
-    config = configparser.ConfigParser()
-    config.read('configs/example.ini')
-    collect_config = config['COLLECT']
+    with open(r'configs/example-config.yml') as file:
+        config = yaml.load(file, Loader=yaml.FullLoader)
+
+    collect_config = config['collect']
 
     while True:
-        loop(tag_list, collect_config)
+        loop(collect_config)

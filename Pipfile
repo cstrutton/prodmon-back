@@ -15,6 +15,7 @@ nose = "*"
 
 [packages]
 pylogix = "*"
+pyyaml = "*"
 
 [requires]
 python_version = "3.7"

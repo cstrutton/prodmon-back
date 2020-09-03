@@ -38,10 +38,13 @@ class MainLoopTestSuit(unittest.TestCase):
             'lastcount': 0,     # last counter value
             'lastread': 0       # timestamp of the last read
         }
+        self.test_config = {
+            'minimum_cycle': 1,
+            'tags': [self.counter_entry]
+        }
 
-    @patch("prodmon.main.PLC")
     @patch("prodmon.main.read_pylogix_counter")
-    def test_polling_too_fast(self, mock_read_counter, mock_PLC):
+    def test_polling_too_fast(self, mock_read_counter):
         """
         Tests Polling faster than the specified minimum cycle
 
@@ -49,52 +52,42 @@ class MainLoopTestSuit(unittest.TestCase):
         - should call read counter exactly one time
         """
 
-        collect_config = dict(minimum_cycle=1)
-
-        prodmon.loop([self.counter_entry], collect_config)
-        prodmon.loop([self.counter_entry], collect_config)
+        prodmon.loop(self.test_config)
+        prodmon.loop(self.test_config)
 
         mock_read_counter.assert_called_once()
 
-    @patch("prodmon.main.PLC")
     @patch("prodmon.main.read_pylogix_counter")
-    def test_polling(self, mock_read_counter, mock_PLC):
+    def test_polling(self, mock_read_counter):
         """
         Tests that the Minimum Cycle is observerd
 
         - try looping 3 times waiting for half minimum cycle between each
         - should call read counter exactly 2 times
         """
-        collect_config = dict(minimum_cycle=1)
+        prodmon.loop(self.test_config)
 
-        prodmon.loop([self.counter_entry], collect_config)
+        time.sleep(self.test_config['minimum_cycle']/2)
 
-        time.sleep(collect_config['minimum_cycle']/2)
+        prodmon.loop(self.test_config)
 
-        prodmon.loop([self.counter_entry], collect_config)
+        time.sleep(self.test_config['minimum_cycle']/2)
 
-        time.sleep(collect_config['minimum_cycle']/2)
-
-        prodmon.loop([self.counter_entry], collect_config)
+        prodmon.loop(self.test_config)
 
         self.assertEqual(mock_read_counter.call_count, 2)
 
-    @patch("prodmon.main.PLC")
     @patch("prodmon.main.read_pylogix_counter")
-    def test_first_pass_through(self, mock_read_counter, mock_PLC):
+    def test_first_pass_through(self, mock_read_counter):
         """
         Tests first pass behaviour
 
-        - try looping 3 times waiting for half minimum cycle between each
-        - should call read counter exactly 2 times
         """
+        self.test_config['tags'][0]['nextread'] = 0
 
-        collect_config = dict(minimum_cycle=1)
+        prodmon.loop(self.test_config)
 
-        self.counter_entry['nextread'] = 0
-        prodmon.loop([self.counter_entry], collect_config)
-
-        self.assertNotEqual(self.counter_entry['nextread'], 0)
+        self.assertNotEqual(self.test_config['tags'][0]['nextread'], 0)
 
 
 if __name__ == '__main__':
