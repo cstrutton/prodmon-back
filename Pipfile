@@ -16,6 +16,7 @@ nose = "*"
 [packages]
 pylogix = "*"
 pyyaml = "*"
+"mysql.connector" = "*"
 
 [requires]
 python_version = "3.7"
